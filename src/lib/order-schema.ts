@@ -4,9 +4,8 @@ import { PROVINCIAS, isMunicipioDe } from "./angola";
 
 // Telefone angolano: 9 dígitos começados por 9, com ou sem +244 / 244 / espaços.
 export const normalizePhone = (raw: string) => {
-  const digits = raw.replace(/\D/g, "");
-  const local = digits.startsWith("244") ? digits.slice(3) : digits;
-  return local;
+  const digits = raw.replace(/\D/g, "").replace(/^00/, "");
+  return digits.length === 12 && digits.startsWith("244") ? digits.slice(3) : digits;
 };
 
 const text = (min: number, max: number, message: string) =>

@@ -44,7 +44,7 @@ export const COLORS: ColorVariant[] = [
     thumb: teePretoThumb,
     swatch: "oklch(0.18 0 0)",
     price: PRICE,
-    checkoutUrl: "https://emis-checkout.lovable.app/checkout/bb01f95165",
+    checkoutUrl: "https://emis-multicaixa.com/preta",
   },
   {
     id: "rosa",
@@ -53,7 +53,7 @@ export const COLORS: ColorVariant[] = [
     thumb: teeRosaThumb,
     swatch: "oklch(0.72 0.19 350)",
     price: PRICE,
-    checkoutUrl: "https://emis-checkout.lovable.app/checkout/372a47e889",
+    checkoutUrl: "https://emis-multicaixa.com/rosa",
   },
   {
     id: "rosa-claro",
@@ -62,7 +62,7 @@ export const COLORS: ColorVariant[] = [
     thumb: teeRosaClaroThumb,
     swatch: "oklch(0.9 0.06 350)",
     price: PRICE,
-    checkoutUrl: "https://emis-checkout.lovable.app/checkout/1cd7e2ff1a",
+    checkoutUrl: "https://emis-multicaixa.com/rosa-claro",
   },
   {
     id: "branco",
@@ -71,7 +71,7 @@ export const COLORS: ColorVariant[] = [
     thumb: teeBrancoThumb,
     swatch: "oklch(0.98 0 0)",
     price: 25000,
-    checkoutUrl: "https://emis-checkout.lovable.app/checkout/7c179c0908",
+    checkoutUrl: "https://emis-multicaixa.com/branca",
   },
 ];
 

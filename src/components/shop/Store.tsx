@@ -417,7 +417,7 @@ export function Store() {
               onEdit={() => setRegistered(null)}
             />
           ) : (
-            <form noValidate onSubmit={onSubmit} onKeyDown={onFormKeyDown}>
+            <form noValidate autoComplete="off" onSubmit={onSubmit} onKeyDown={onFormKeyDown}>
               <h2 className="text-xl">Dados de entrega</h2>
               <p className="mt-1 text-sm text-muted-foreground">Sem conta, sem registo.</p>
 
@@ -440,7 +440,12 @@ export function Store() {
                 >
                   <Input
                     id="f-nome"
-                    autoComplete="name"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    data-1p-ignore
+                    data-lpignore="true"
+                    data-form-type="other"
                     enterKeyHint="next"
                     placeholder="Ex.: João Manuel"
                     maxLength={100}
@@ -453,7 +458,12 @@ export function Store() {
                 <Field id="provincia" label="Província" error={errors.provincia}>
                   <select
                     id="f-provincia"
-                    autoComplete="address-level1"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    data-1p-ignore
+                    data-lpignore="true"
+                    data-form-type="other"
                     value={form.provincia}
                     onChange={(e) => changeProvincia(e.target.value)}
                     aria-invalid={!!errors.provincia}
@@ -472,7 +482,12 @@ export function Store() {
                 <Field id="municipio" label="Município" error={errors.municipio}>
                   <select
                     id="f-municipio"
-                    autoComplete="address-level2"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    data-1p-ignore
+                    data-lpignore="true"
+                    data-form-type="other"
                     value={form.municipio}
                     onChange={(e) => changeMunicipio(e.target.value)}
                     aria-invalid={!!errors.municipio}
@@ -497,7 +512,12 @@ export function Store() {
                 >
                   <Input
                     id="f-bairro"
-                    autoComplete="address-level3"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    data-1p-ignore
+                    data-lpignore="true"
+                    data-form-type="other"
                     placeholder={
                       locationReady
                         ? provincia === "Luanda"
@@ -521,7 +541,12 @@ export function Store() {
                 >
                   <Input
                     id="f-endereco"
-                    autoComplete="street-address"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    data-1p-ignore
+                    data-lpignore="true"
+                    data-form-type="other"
                     placeholder={
                       locationReady ? "Indica a rua, avenida ou o endereço" : LOCATION_PENDING
                     }
@@ -541,6 +566,12 @@ export function Store() {
                 >
                   <Input
                     id="f-referencia"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    data-1p-ignore
+                    data-lpignore="true"
+                    data-form-type="other"
                     placeholder={
                       locationReady
                         ? "Ex.: perto de uma escola, mercado ou paragem conhecida"
@@ -564,7 +595,12 @@ export function Store() {
                     id="f-telefone"
                     type="tel"
                     inputMode="tel"
-                    autoComplete="tel-national"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    data-1p-ignore
+                    data-lpignore="true"
+                    data-form-type="other"
                     enterKeyHint="done"
                     placeholder="Número de contacto para a entrega"
                     maxLength={20}

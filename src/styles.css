@@ -226,23 +226,6 @@
 }
 
 /*
- * Bloqueio de desktop: o site só abre em telemóveis e tablets.
- * Dispositivos cujo ponteiro principal é rato/trackpad veem apenas o aviso.
- */
-.desktop-block {
-  display: none;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .site-content {
-    display: none;
-  }
-  .desktop-block {
-    display: flex;
-  }
-}
-
-/*
  * Protecção contra capturas de ecrã: sem selecção de texto, sem menu de
  * toque longo nem arrastar imagens. Campos de formulário continuam editáveis.
  */

@@ -128,15 +128,6 @@ function RootShell({ children }: { children: ReactNode }) {
             src={`https://www.facebook.com/tr?id=${FB_PIXEL_ID}&ev=PageView&noscript=1`}
           />
         </noscript>
-        <div className="desktop-block min-h-screen items-center justify-center bg-background px-6">
-          <div className="max-w-md text-center">
-            <h1 className="text-2xl font-bold text-foreground">Abre no teu telemóvel</h1>
-            <p className="mt-3 text-sm text-muted-foreground">
-              Este site está disponível apenas em telemóveis. Abre este link no teu telemóvel para
-              fazeres a tua encomenda.
-            </p>
-          </div>
-        </div>
         <div className="site-content">{children}</div>
         <Scripts />
       </body>

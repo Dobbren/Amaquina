@@ -220,6 +220,30 @@ export function Store() {
       location.reset();
   };
 
+  // No telemóvel, o "Enter/Ir" do teclado não deve submeter: passa ao campo seguinte
+  // ou, no último, só fecha o teclado.
+  const onFormKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key !== "Enter" || e.nativeEvent.isComposing || e.keyCode === 229) return;
+    const target = e.target as HTMLElement;
+    if (!(target instanceof HTMLInputElement)) return;
+    e.preventDefault();
+    const fields = Array.from(
+      e.currentTarget.querySelectorAll<HTMLInputElement | HTMLSelectElement>(
+        "input[id^='f-'], select[id^='f-']",
+      ),
+    ).filter((el) => !el.disabled);
+    const next = fields[fields.indexOf(target) + 1];
+    if (next) next.focus();
+    else target.blur();
+  };
+
+  const focusField = (field: string) => {
+    const el = document.getElementById(`f-${field}`);
+    if (!el) return;
+    el.focus({ preventScroll: true });
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (inFlight.current) return;
@@ -229,7 +253,7 @@ export function Store() {
     if (Object.keys(clientErrors).length > 0) {
       setErrors(clientErrors);
       const first = Object.keys(clientErrors)[0];
-      document.getElementById(`f-${first}`)?.focus();
+      if (first) focusField(first);
       return;
     }
 
@@ -256,7 +280,7 @@ export function Store() {
         setErrors(fieldErrors);
         setFormError(result.error);
         const first = Object.keys(fieldErrors)[0];
-        if (first) document.getElementById(`f-${first}`)?.focus();
+        if (first) focusField(first);
       }
     } catch {
       setFormError("Sem ligação ao servidor. Verifica a internet e tenta novamente.");
@@ -393,7 +417,7 @@ export function Store() {
               onEdit={() => setRegistered(null)}
             />
           ) : (
-            <form noValidate onSubmit={onSubmit}>
+            <form noValidate onSubmit={onSubmit} onKeyDown={onFormKeyDown}>
               <h2 className="text-xl">Dados de entrega</h2>
               <p className="mt-1 text-sm text-muted-foreground">Sem conta, sem registo.</p>
 
@@ -417,6 +441,7 @@ export function Store() {
                   <Input
                     id="f-nome"
                     autoComplete="name"
+                    enterKeyHint="next"
                     placeholder="Ex.: João Manuel"
                     maxLength={100}
                     value={form.nome}
@@ -450,7 +475,6 @@ export function Store() {
                     autoComplete="address-level2"
                     value={form.municipio}
                     onChange={(e) => changeMunicipio(e.target.value)}
-                    disabled={!provincia}
                     aria-invalid={!!errors.municipio}
                     className="h-11 w-full rounded-md border border-input bg-background px-3 text-base disabled:opacity-60 md:text-sm"
                   >
@@ -481,7 +505,7 @@ export function Store() {
                           : "Ex.: nome do bairro, zona ou aldeia"
                         : LOCATION_PENDING
                     }
-                    disabled={!locationReady}
+                    enterKeyHint="next"
                     maxLength={80}
                     value={form.bairro}
                     onChange={(e) => update("bairro", e.target.value)}
@@ -501,7 +525,7 @@ export function Store() {
                     placeholder={
                       locationReady ? "Indica a rua, avenida ou o endereço" : LOCATION_PENDING
                     }
-                    disabled={!locationReady}
+                    enterKeyHint="next"
                     maxLength={200}
                     value={form.endereco}
                     onChange={(e) => update("endereco", e.target.value)}
@@ -522,7 +546,7 @@ export function Store() {
                         ? "Ex.: perto de uma escola, mercado ou paragem conhecida"
                         : LOCATION_PENDING
                     }
-                    disabled={!locationReady}
+                    enterKeyHint="next"
                     maxLength={200}
                     value={form.referencia}
                     onChange={(e) => update("referencia", e.target.value)}
@@ -541,6 +565,7 @@ export function Store() {
                     type="tel"
                     inputMode="tel"
                     autoComplete="tel-national"
+                    enterKeyHint="done"
                     placeholder="Número de contacto para a entrega"
                     maxLength={20}
                     value={form.telefone}
@@ -1001,13 +1026,21 @@ function MobileBar({
       rootMargin: "0px 0px -20% 0px",
     });
     io.observe(target);
-    // Esconde enquanto o teclado está aberto.
-    const onFocus = (e: FocusEvent) =>
+    // Esconde enquanto o teclado está aberto. O atraso evita que a barra pisque
+    // ao saltar de campo em campo ou enquanto o teclado ainda está a fechar.
+    let hideTimer: ReturnType<typeof setTimeout> | undefined;
+    const onFocus = (e: FocusEvent) => {
+      clearTimeout(hideTimer);
       setTyping((e.target as HTMLElement).matches?.("input, select, textarea") ?? false);
-    const onBlur = () => setTyping(false);
+    };
+    const onBlur = () => {
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => setTyping(false), 400);
+    };
     document.addEventListener("focusin", onFocus);
     document.addEventListener("focusout", onBlur);
     return () => {
+      clearTimeout(hideTimer);
       io.disconnect();
       document.removeEventListener("focusin", onFocus);
       document.removeEventListener("focusout", onBlur);

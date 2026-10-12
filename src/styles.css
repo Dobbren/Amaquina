@@ -225,36 +225,3 @@
   }
 }
 
-/*
- * Protecção contra capturas de ecrã: sem selecção de texto, sem menu de
- * toque longo nem arrastar imagens. Campos de formulário continuam editáveis.
- */
-.site-content {
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
-}
-
-.site-content input,
-.site-content textarea,
-.site-content select {
-  -webkit-user-select: text;
-  user-select: text;
-}
-
-.site-content img {
-  -webkit-user-drag: none;
-  pointer-events: none;
-}
-
-/* Quando a página perde o foco, o conteúdo fica escondido. */
-html.screen-guard .site-content {
-  filter: blur(24px);
-  opacity: 0;
-}
-
-@media print {
-  .site-content {
-    display: none !important;
-  }
-}

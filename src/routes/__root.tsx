@@ -135,77 +135,8 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-/*
- * Protecção contra capturas de ecrã em telemóvel. Os browsers não permitem
- * bloquear o print do sistema; o melhor possível é esconder o conteúdo sempre
- * que a página perde o foco (multitarefa, centro de controlo, ferramentas de
- * captura) e impedir guardar/copiar imagens e texto com toque longo.
- */
-function useScreenshotGuard() {
-  useEffect(() => {
-    const root = document.documentElement;
-    const hide = () => root.classList.add("screen-guard");
-    const show = () => {
-      if (document.visibilityState === "visible" && document.hasFocus()) {
-        root.classList.remove("screen-guard");
-      }
-    };
-    const onVisibility = () => (document.visibilityState === "hidden" ? hide() : show());
-    const prevent = (e: Event) => e.preventDefault();
-    const isField = (t: EventTarget | null) =>
-      t instanceof HTMLInputElement ||
-      t instanceof HTMLTextAreaElement ||
-      t instanceof HTMLSelectElement;
-    // Copiar texto do site: só dentro dos campos do formulário.
-    const preventCopy = (e: Event) => {
-      if (!isField(e.target)) e.preventDefault();
-    };
-    // Teclados ligados a tablets: tecla Print, imprimir e guardar a página.
-    const onKey = (e: KeyboardEvent) => {
-      const key = e.key.toLowerCase();
-      if (e.key === "PrintScreen") {
-        hide();
-        void navigator.clipboard?.writeText("").catch(() => {});
-        setTimeout(show, 1500);
-      }
-      if ((e.ctrlKey || e.metaKey) && (key === "p" || key === "s")) e.preventDefault();
-    };
-
-    document.addEventListener("visibilitychange", onVisibility);
-    window.addEventListener("blur", hide);
-    window.addEventListener("focus", show);
-    window.addEventListener("pagehide", hide);
-    window.addEventListener("pageshow", show);
-    document.addEventListener("contextmenu", prevent);
-    document.addEventListener("dragstart", prevent);
-    document.addEventListener("copy", preventCopy);
-    document.addEventListener("cut", preventCopy);
-    document.addEventListener("keydown", onKey);
-    document.addEventListener("keyup", onKey);
-    window.addEventListener("beforeprint", hide);
-    window.addEventListener("afterprint", show);
-
-    return () => {
-      document.removeEventListener("copy", preventCopy);
-      document.removeEventListener("cut", preventCopy);
-      document.removeEventListener("keydown", onKey);
-      document.removeEventListener("keyup", onKey);
-      window.removeEventListener("beforeprint", hide);
-      window.removeEventListener("afterprint", show);
-      document.removeEventListener("visibilitychange", onVisibility);
-      window.removeEventListener("blur", hide);
-      window.removeEventListener("focus", show);
-      window.removeEventListener("pagehide", hide);
-      window.removeEventListener("pageshow", show);
-      document.removeEventListener("contextmenu", prevent);
-      document.removeEventListener("dragstart", prevent);
-    };
-  }, []);
-}
-
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  useScreenshotGuard();
 
   return (
     <QueryClientProvider client={queryClient}>

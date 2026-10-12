@@ -20,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { submitOrder } from "@/lib/order.functions";
-import { trackPixel } from "@/lib/pixel";
 import { newOrderId, orderSchema, type OrderField, type OrderInput } from "@/lib/order-schema";
 import { MUNICIPIOS, PROVINCIAS, isMunicipioDe, isProvincia } from "@/lib/angola";
 import { coverageFor, type Coverage } from "@/lib/delivery";
@@ -63,18 +62,6 @@ type Registered = {
 
 const DEFAULT_COLOR: ColorId = "preto";
 const LOCATION_PENDING = "Escolhe primeiro o município";
-
-// Parâmetros do píxel: só dados do produto, nunca dados pessoais.
-const pixelParams = (id: ColorId) => {
-  const v = colorById(id);
-  return {
-    content_ids: [v.id],
-    content_name: `${PRODUCT_NAME} ${v.name}`,
-    content_type: "product" as const,
-    value: v.price,
-    currency: "AOA" as const,
-  };
-};
 
 export function Store() {
   const search = useSearch({ from: "/" });
@@ -147,11 +134,6 @@ export function Store() {
     }
     if (Object.keys(patch).length > 0) setForm((f) => ({ ...f, ...patch }));
   }, []);
-
-  // Píxel: o cliente viu esta cor (no carregamento e a cada troca).
-  useEffect(() => {
-    trackPixel("ViewContent", pixelParams(color));
-  }, [color]);
 
   // Se o cliente mudar cor ou tamanho depois de registar, volta a pedir confirmação.
   useEffect(() => {
@@ -271,14 +253,12 @@ export function Store() {
     try {
       const result = await submit({ data: payload() });
       if (result.ok) {
-        const confirmada = result.cobertura === "confirmada";
-        trackPixel(confirmada ? "InitiateCheckout" : "Lead", pixelParams(color), result.pedidoId);
         // Se o cliente corrigir os dados, o novo envio precisa de outro id (senão o destino ignora-o).
         orderId.current = null;
         setConfirming(false);
         setRegistered({
           pedidoId: result.pedidoId,
-          checkoutUrl: confirmada ? result.checkoutUrl : null,
+          checkoutUrl: result.cobertura === "confirmada" ? result.checkoutUrl : null,
           cor: color,
           tamanho: size!,
         });
@@ -1113,12 +1093,7 @@ function PaymentStep({
         </li>
       </ol>
       <Button variant="hero" size="xl" className="mt-6 h-12 w-full text-sm" asChild>
-        <a
-          href={checkoutUrl}
-          onClick={() =>
-            trackPixel("AddPaymentInfo", pixelParams(registered.cor), registered.pedidoId)
-          }
-        >
+        <a href={checkoutUrl}>
           Pagar {formatKz(variant.price)}
         </a>
       </Button>

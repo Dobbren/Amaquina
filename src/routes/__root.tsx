@@ -12,7 +12,6 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { FB_PIXEL_ID, FB_PIXEL_SCRIPT } from "../lib/pixel";
 
 function NotFoundComponent() {
   return (
@@ -100,10 +99,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap",
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
-      { rel: "preconnect", href: "https://connect.facebook.net" },
     ],
-    // Píxel do Facebook: código base em todas as páginas.
-    scripts: [{ children: FB_PIXEL_SCRIPT }],
   }),
 
   shellComponent: RootShell,
@@ -119,15 +115,6 @@ function RootShell({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <noscript>
-          <img
-            height="1"
-            width="1"
-            style={{ display: "none" }}
-            alt=""
-            src={`https://www.facebook.com/tr?id=${FB_PIXEL_ID}&ev=PageView&noscript=1`}
-          />
-        </noscript>
         <div className="site-content">{children}</div>
         <Scripts />
       </body>

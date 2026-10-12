@@ -240,6 +240,8 @@ export function Store() {
       if (result.ok) {
         const confirmada = result.cobertura === "confirmada";
         trackPixel(confirmada ? "InitiateCheckout" : "Lead", pixelParams(color), result.pedidoId);
+        // Se o cliente corrigir os dados, o novo envio precisa de outro id (senão o destino ignora-o).
+        orderId.current = null;
         setRegistered({
           pedidoId: result.pedidoId,
           checkoutUrl: confirmada ? result.checkoutUrl : null,
@@ -250,8 +252,11 @@ export function Store() {
           document.getElementById("pedido")?.scrollIntoView({ behavior: "smooth", block: "start" }),
         );
       } else {
-        setErrors(result.fieldErrors ?? {});
+        const fieldErrors = result.fieldErrors ?? {};
+        setErrors(fieldErrors);
         setFormError(result.error);
+        const first = Object.keys(fieldErrors)[0];
+        if (first) document.getElementById(`f-${first}`)?.focus();
       }
     } catch {
       setFormError("Sem ligação ao servidor. Verifica a internet e tenta novamente.");

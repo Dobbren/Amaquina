@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import {
   ArrowPathIcon,
   CheckIcon,
@@ -100,6 +101,7 @@ export function Store() {
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [registered, setRegistered] = useState<Registered | null>(null);
+  const [confirming, setConfirming] = useState(false);
   const inFlight = useRef(false);
   // O mesmo id é reutilizado em novas tentativas do mesmo pedido (evita duplicados no destino).
   const orderId = useRef<string | null>(null);
@@ -244,7 +246,7 @@ export function Store() {
     el.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
-  const onSubmit = async (e: React.FormEvent) => {
+  const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inFlight.current) return;
     setFormError(null);
@@ -257,6 +259,13 @@ export function Store() {
       return;
     }
 
+    // Fecha o teclado antes de mostrar o resumo.
+    (document.activeElement as HTMLElement | null)?.blur();
+    setConfirming(true);
+  };
+
+  const confirmOrder = async () => {
+    if (inFlight.current) return;
     inFlight.current = true;
     setSubmitting(true);
     try {
@@ -266,6 +275,7 @@ export function Store() {
         trackPixel(confirmada ? "InitiateCheckout" : "Lead", pixelParams(color), result.pedidoId);
         // Se o cliente corrigir os dados, o novo envio precisa de outro id (senão o destino ignora-o).
         orderId.current = null;
+        setConfirming(false);
         setRegistered({
           pedidoId: result.pedidoId,
           checkoutUrl: confirmada ? result.checkoutUrl : null,
@@ -276,13 +286,15 @@ export function Store() {
           document.getElementById("pedido")?.scrollIntoView({ behavior: "smooth", block: "start" }),
         );
       } else {
+        setConfirming(false);
         const fieldErrors = result.fieldErrors ?? {};
         setErrors(fieldErrors);
         setFormError(result.error);
         const first = Object.keys(fieldErrors)[0];
-        if (first) focusField(first);
+        if (first) requestAnimationFrame(() => focusField(first));
       }
     } catch {
+      setConfirming(false);
       setFormError("Sem ligação ao servidor. Verifica a internet e tenta novamente.");
     } finally {
       inFlight.current = false;
@@ -733,8 +745,169 @@ export function Store() {
         </div>
       </footer>
 
-      <MobileBar colorName={selected.name} price={selected.price} hidden={!!registered} />
+      <ConfirmSheet
+        open={confirming}
+        submitting={submitting}
+        aConfirmar={aConfirmar}
+        colorName={selected.name}
+        image={selected.image}
+        size={size}
+        price={selected.price}
+        form={form}
+        onCancel={() => setConfirming(false)}
+        onConfirm={confirmOrder}
+      />
+
+      <MobileBar
+        colorName={selected.name}
+        price={selected.price}
+        hidden={!!registered || confirming}
+      />
     </>
+  );
+}
+
+function ConfirmSheet({
+  open,
+  submitting,
+  aConfirmar,
+  colorName,
+  image,
+  size,
+  price,
+  form,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean;
+  submitting: boolean;
+  aConfirmar: boolean;
+  colorName: string;
+  image: string | undefined;
+  size: Size | null;
+  price: number;
+  form: DeliveryForm;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const local = [form.municipio, form.provincia].filter(Boolean).join(", ");
+  const morada = [form.endereco, form.bairro].map((v) => v.trim()).filter(Boolean).join(", ");
+  const rows: [string, string][] = [
+    ["Nome", form.nome.trim()],
+    ["Entrega em", local],
+    ["Morada", morada],
+    ...(form.referencia.trim() ? [["Referência", form.referencia.trim()] as [string, string]] : []),
+  ];
+
+  return (
+    <DialogPrimitive.Root
+      open={open}
+      onOpenChange={(next) => {
+        if (!next && !submitting) onCancel();
+      }}
+    >
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm data-[state=open]:animate-in data-[state=open]:fade-in-0" />
+        <DialogPrimitive.Content
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col rounded-t-xl border border-border bg-card text-card-foreground outline-none data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom md:inset-x-auto md:bottom-auto md:left-1/2 md:top-1/2 md:w-full md:max-w-md md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-xl"
+        >
+          <div className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-border md:hidden" aria-hidden />
+          <div className="flex flex-col gap-4 overflow-y-auto px-4 pb-4 pt-3 sm:px-6 md:pt-6">
+            <div>
+              <DialogPrimitive.Title className="text-lg">Confirma os teus dados</DialogPrimitive.Title>
+              <DialogPrimitive.Description className="mt-1 text-sm text-muted-foreground">
+                Verifica antes de continuar. Podes corrigir sem perder nada.
+              </DialogPrimitive.Description>
+            </div>
+
+            <div className="flex items-center gap-3 rounded-md border border-border p-2.5">
+              {image && (
+                <img
+                  src={image}
+                  alt=""
+                  className="h-14 w-14 shrink-0 rounded-[4px] object-cover"
+                />
+              )}
+              <div className="min-w-0 text-sm">
+                <p className="truncate font-semibold">{PRODUCT_NAME}</p>
+                <p className="text-muted-foreground">
+                  Cor {colorName} · Tamanho {size ?? "-"}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-md border border-foreground/40 bg-background px-3 py-2.5">
+              <p className="text-xs text-muted-foreground">Telefone para contacto</p>
+              <p className="mt-0.5 font-display text-xl tracking-wide">{form.telefone.trim()}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Confirma que está certo: é por aqui que te contactamos para a entrega.
+              </p>
+            </div>
+
+            <dl className="flex flex-col gap-2 text-sm">
+              {rows.map(([label, value]) => (
+                <div key={label} className="flex gap-3">
+                  <dt className="w-24 shrink-0 text-muted-foreground">{label}</dt>
+                  <dd className="min-w-0 break-words">{value}</dd>
+                </div>
+              ))}
+            </dl>
+
+            <dl className="flex flex-col gap-1.5 border-t border-border pt-3 text-sm">
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">Produto</dt>
+                <dd>{formatKz(price)}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">Entrega</dt>
+                <dd className="font-semibold">Grátis</dd>
+              </div>
+              <div className="flex items-baseline justify-between gap-3 pt-1">
+                <dt className="font-semibold">Total</dt>
+                <dd className="font-display text-xl">{formatKz(price)}</dd>
+              </div>
+            </dl>
+            {aConfirmar && (
+              <p className="flex items-start gap-2 text-xs text-muted-foreground">
+                <InformationCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+                A entrega na tua zona é confirmada pela equipa antes do pagamento.
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-col-reverse gap-2 border-t border-border px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:flex-row sm:px-6">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-12 flex-1"
+              disabled={submitting}
+              onClick={onCancel}
+            >
+              Corrigir
+            </Button>
+            <Button
+              type="button"
+              variant="hero"
+              className="h-12 flex-1 text-sm"
+              disabled={submitting}
+              aria-busy={submitting}
+              onClick={onConfirm}
+            >
+              {submitting ? (
+                <>
+                  <ArrowPathIcon className="animate-spin" /> A registar…
+                </>
+              ) : aConfirmar ? (
+                "Confirmar e enviar"
+              ) : (
+                "Confirmar e pagar"
+              )}
+            </Button>
+          </div>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   );
 }
 
